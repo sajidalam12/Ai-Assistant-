@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M.J. AI Assistant</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ffff;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120,119,198,0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(120,119,198,0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120,119,198,0.2) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite alternate;
+            z-index: -1;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #00ffff, #00bfff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px #00ffff;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px #00ffff; }
+            to { text-shadow: 0 0 30px #00ffff, 0 0 40px #00ffff; }
+        }
+
+        .status {
+            background: rgba(0, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid #00ffff;
+            font-size: 0.9rem;
+        }
+
+        .chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.1);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ai-message {
+            text-align: left;
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .ai-message .message-bubble {
+            background: rgba(0, 191, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.5);
+            color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .user-message .message-bubble {
+            background: rgba(0, 255, 255, 0.15);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            color: #fff;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00ffff;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #user-input:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #00ffff, #00bfff);
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+        }
+
+        .mic-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            animation: pulse-mic 2s infinite;
+        }
+
+        @keyframes pulse-mic {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(0, 255, 255, 0); }
+        }
+
+        .mic-btn.recording {
+            background: #ff4444;
+            animation: none;
+            box-shadow: 0 0 20px #ff4444;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 10px 20px;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ffff;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: scale(1); opacity: 0.5; }
+            30% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .logo { font-size: 1.5rem; }
+            .message-bubble { max-width: 85%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="logo">M.J.</h1>
+            <div class="status">Online</div>
+        </header>
+        <div id="chat-window" class="chat-window">
+            <div class="message ai-message">
+                <div class="message-bubble">
+                    Hello! I'm M.J., your personal AI assistant. How may I assist you today?
+                </div>
+            </div>
+        </div>
+        <div class="input-container">
+            <button id="mic-btn" class="mic-btn" title="Voice Input">🎤</button>
+            <input type="text" id="user-input" placeholder="Speak or type your command..." autocomplete="off">
+            <button id="send-btn">Send</button>
+        </div>
+        <div id="typing-indicator" class="typing-indicator" style="display: none;">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <script>
+        // M.J. AI Assistant
+        class MJAI {
+            constructor() {
+                this.chatWindow = document.getElementById('chat-window');
+                this.userInput = document.getElementById('user-input');
+                this.sendBtn = document.getElementById('send-btn');
+                this.micBtn = document.getElementById('mic-btn');
+                this.typingIndicator = document.getElementById('typing-indicator');
+                
+                this.recognition = null;
+                this.synth = window.speechSynthesis;
+                this.messages = [{ 
+                    role: 'system', 
+                    content: 'You are M.J., a personal AI assistant. Always respond in English only. Be helpful, professional, and smart. Focus on the user\'s queries directly.' 
+                }];
+                
+                this.init();
+            }
+            
+            init() {
+                this.sendBtn.addEventListener('click', () => this.sendMessage());
+                this.userInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                });
+                this.micBtn.addEventListener('click', () => this.toggleVoice());
+                
+                this.initSpeechRecognition();
+                this.synth.onvoiceschanged = () => this.setVoice();
+            }
+            
+            initSpeechRecognition() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    console.warn('Speech recognition not supported');
+                    return;
+                }
+                
+                this.recognition = new SpeechRecognition();
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+                this.recognition.lang = 'en-US';
+                
+                this.recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    this.userInput.value = transcript;
+                    this.sendMessage();
+                };
+                
+                this.recognition.onerror = (event) => {
+                    this.addMessage('ai', `Voice recognition error: ${event.error}`);
+                };
+                
+                this.recognition.onend = () => {
+                    this.micBtn.classList.remove('recording');
+                    this.micBtn.textContent = '🎤';
+                };
+            }
+            
+            toggleVoice() {
+                if (!this.recognition) {
+                    this.addMessage('ai', 'Voice recognition not supported in this browser. Please type your command.');
+                    return;
+                }
+                
+                if (this.recognition.recording) {
+                    this.recognition.stop();
+                } else {
+                    this.recognition.start();
+                    this.micBtn.classList.add('recording');
+                    this.micBtn.textContent = '⏹️';
+                }
+            }
+            
+            setVoice() {
+                const voices = this.synth.getVoices();
+                const voice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('male')) || 
+                             voices.find(v => v.lang.startsWith('en'));
+                this.mjVoice = voice;
+            }
+            
+            async sendMessage() {
+                const input = this.userInput.value.trim();
+                if (!input) return;
+                
+                this.addMessage('user', input);
+                this.userInput.value = '';
+                this.showTyping();
+                
+                if (this.handleCommand(input)) {
+                    this.hideTyping();
+                    return;
+                }
+                
+                try {
+                    this.messages.push({ role: 'user', content: input });
+                    const response = await puter.ai.chat(this.messages, { 
+                        model: 'gpt-4o-mini', 
+                        stream: true,
+                        max_tokens: 200 
+                    });
+                    
+                    let aiResponse = '';
+                    for await (const part of response) {
+                        if (part.type === 'text') {
+                            aiResponse += part.text;
+                        }
+                    }
+                    
+                    this.messages.push({ role: 'assistant', content: aiResponse });
+                    this.hideTyping();
+                    this.addMessage('ai', aiResponse);
+                    this.speak(aiResponse);
+                    
+                } catch (error) {
+                    this.hideTyping();
+                    this.addMessage('ai', 'Sorry, I\'m having connectivity issues. Please try again.');
+                }
+            }
+            
+            handleCommand(input) {
+                const lowerInput = input.toLowerCase();
+                let response = '';
+                
+                if (lowerInput.includes('time') || lowerInput.includes('clock')) {
+                    const now = new Date();
+                    const timeIST = now.toLocaleTimeString('en-US', { 
+                        timeZone: 'Asia/Kolkata',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true 
+                    });
+                    response = `The current time is ${timeIST}.`;
+                } 
+                else if (lowerInput.includes('joke')) {
+                    const jokes = [
+                        'Why did the astronaut break up with his girlfriend? Because he needed space!',
+                        'Why don\'t programmers like nature? It has too many bugs.',
+                        'Why did the computer go to therapy? It had too many bytes of emotional baggage.',
+                        'Here\'s one for you: Parallel lines have so much in common. It\'s a shame they\'ll never meet.'
+                    ];
+                    response = jokes[Math.floor(Math.random() * jokes.length)];
+                } 
+                else if (lowerInput.includes('google') || lowerInput.includes('search')) {
+                    const searchTerm = input.toLowerCase().includes('search') ? input.split('search')[1]?.trim() || 'Google' : 'Google';
+                    window.open(`https://google.com/search?q=${encodeURIComponent(searchTerm)}`, '_blank');
+                    response = `Opening Google search for "${searchTerm}".`;
+                }
+                else if (lowerInput.includes('music') || lowerInput.includes('play music')) {
+                    window.open('https://music.youtube.com', '_blank');
+                    response = 'Opening your music library.';
+                }
+                else {
+                    return false;
+                }
+                
+                this.addMessage('ai', response);
+                this.speak(response);
+                return true;
+            }
+            
+            addMessage(sender, text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                bubble.textContent = text;
+                
+                messageDiv.appendChild(bubble);
+                this.chatWindow.appendChild(messageDiv);
+                this.chatWindow.scrollTop = this.chatWindow.scrollHeight;
+            }
+            
+            showTyping() {
+                this.typingIndicator.style.display = 'flex';
+            }
+            
+            hideTyping() {
+                this.typingIndicator.style.display = 'none';
+            }
+            
+            speak(text) {
+                if (!this.synth || !this.mjVoice) return;
+                this.synth.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = this.mjVoice;
+                utterance.rate = 0.9;
+                utterance.pitch = 0.8;
+                utterance.volume = 0.8;
+                utterance.lang = 'en-US';
+                
+                this.synth.speak(utterance);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new MJAI();
+        });
+    </script>
+</body>
+</html>
